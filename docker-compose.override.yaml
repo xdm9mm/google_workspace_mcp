@@ -1,0 +1,14 @@
+# Local-dev/bootstrap-only addition to docker-compose.yaml — Compose auto-merges this
+# file when present, so a plain `docker compose build`/`up` here builds from source,
+# while hServer-L1 (which won't have this file) only ever pulls the pushed image.
+#
+# Compose tags a service's build output with its `image:` value from the merged
+# config, so this build is already named/tagged for the registry — push it with:
+#   docker compose push
+# (equivalent to `docker push vault.eddington.place:5443/google-workspace-mcp:latest`,
+# no separate `docker tag` step needed).
+services:
+  google-workspace-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile

@@ -1,0 +1,30 @@
+# Base compose file — the one deployed as-is to hServer-L1 (/srv/shared/google-workspace-mcp).
+# Declares `image:`, not `build:`: per the registry policy decided 2026-09-29
+# (eddington-shared/docs/eddington_infrastructure.md), self-built images are pushed to
+# `eddington-registry` and pulled, never rebuilt from source on the host that runs them.
+# hServer-L1 only ever needs this file + .env — no Dockerfile, no git clone.
+#
+# Local dev/bootstrap builds via docker-compose.override.yaml (auto-merged, adds
+# `build:` on top of this `image:`), so `docker compose build` here tags the result
+# with the same name this file declares — ready to `docker compose push` with no
+# separate `docker tag` step.
+#
+# No client_secret.json mount — unlike upstream's own docker-compose.yml, this fork
+# passes GOOGLE_OAUTH_CLIENT_ID/_CLIENT_SECRET/_REDIRECT_URI directly via .env
+# (auth/google_auth.py's load_client_secrets_from_env()), so there's no file to bind-mount
+# or keep in sync.
+services:
+  google-workspace-mcp:
+    image: vault.eddington.place:5443/google-workspace-mcp:latest
+    container_name: google-workspace-mcp
+    restart: unless-stopped
+    ports:
+      - "${WORKSPACE_MCP_PORT:-8488}:${WORKSPACE_MCP_PORT:-8488}"
+    env_file: ./.env
+    volumes:
+      # Persists the encrypted token store across container recreation. Without this
+      # volume every restart loses the login and needs a fresh OAuth consent.
+      - google-workspace-mcp-data:/app/store_creds
+
+volumes:
+  google-workspace-mcp-data:
